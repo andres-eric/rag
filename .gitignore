@@ -1,0 +1,30 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Base de datos vectorial (se regenera al correr el script)
+chroma_db/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Variables de entorno (contienen API Keys!)
+.env
+
+# Archivos temporales
+*.tmp
+*.log
+*.bak
+
+# VS Code
+.vscode/
+
+# PDFs grandes (opcional — comenta esta línea si quieres subir los PDFs)
+# *.pdf
