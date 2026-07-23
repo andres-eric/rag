@@ -85,7 +85,10 @@ def obtener_rag_chain(vector_store: Chroma,docs):
         llm_gemini_instance = ChatOllama(
             model="qwen2.5:14b",
             base_url="http://localhost:11434",  # URL por defecto de Ollama
+            repeat_penalty=1.15,
             temperature=0.3,
+            #num_gpu=1,
+            #num_thread=12
         )
         print("Modelo Qwen 2.5 14B (Ollama local) inicializado correctamente.")
     except Exception as e:
