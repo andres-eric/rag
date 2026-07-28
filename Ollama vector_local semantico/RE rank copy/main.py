@@ -69,7 +69,8 @@ ruta_guardado = os.path.join(os.path.dirname(full_path), "documento_salida.md")
 guardar_markdown(texto_completo, ruta_guardado)
 print(f"Markdown guardado en: {ruta_guardado}")
 
-pregunta_original="Si ocurre un corte total en el enlace de fibra óptica proporcionado por Tigo, el equipo de seguridad perimetral debe redirigir el tráfico hacia el radio enlace de GTD Colombia. Según los protocolos de recuperación, ¿cuánto tiempo exacto toma esta migración de servicios y qué roles específicos tienen la responsabilidad de ejecutar la recuperación? "
+pregunta_original="¿Existe un procedimiento de copias adicionales de disco que no están diseñadas para restaurarse, sino para reemplazar directamente un disco virtual afectado. ¿En qué unidad de almacenamiento (NAS) específica se guardan estas copias diarias y por qué SARASVATI tiene un trato excepcional en el número de copias retenidas? "
+
 
 print(f"pregunta original : {pregunta_original}")
 pregunta_expandida = definir_pregunt(pregunta_original)

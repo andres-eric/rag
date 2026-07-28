@@ -32,10 +32,10 @@ from langchain_classic.retrievers.multi_query import MultiQueryRetriever
 import time
 from langchain_core.runnables import RunnableLambda
 from langchain_experimental.text_splitter import SemanticChunker
-
+from langchain_community.vectorstores import Annoy
 from langchain_core.output_parsers import StrOutputParser
-from langchain_classic.retrievers import ParentDocumentRetriever
-from langchain_classic.storage import InMemoryStore
+
+
 # Configuración inicial de logs y warnings
 load_dotenv(find_dotenv())
 
@@ -83,14 +83,10 @@ def crear_pdf_store_vectore(lista_documentos):
 
     #SemanticChunker divide segun la idea de la lectura
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=2000,  # Tamaños de ~1000 caracteres aseguran incluir filas completas
-    chunk_overlap=500,  # 250 caracteres de solapamiento para no perder la relación cabecera-dato
-    separators=["\n\n", "\n", "|", " ", ""],
-    add_start_index=True,
-)
-
-
+    text_splitter = SemanticChunker(
+        embeddings=embeddings_model, # Le pasamos tu modelo de Ollama
+        add_start_index=True
+    )
     docs = text_splitter.split_documents(lista_documentos)
     print(f"Se han creado {len(docs)} chunks de texto.")
 
@@ -141,7 +137,7 @@ def definir_pregunt(question: str)-> str:
         print(f"ERROR: Falló la inicialización de llm para pregunta. Mensaje: {e}")
 
 
-    expansion_template = """Dada la pregunta original del usuario: {question}
+    expansion_template = expansion_template = """Dada la pregunta original del usuario: {question}
 
 Tu objetivo es interpretar la intención subyacente del usuario y generar tres versiones alternativas de búsqueda para una base de datos vectorial. Debes capturar todos los contextos posibles del tema, desde lo más simple hasta lo más general.
 
@@ -150,6 +146,7 @@ Reglas ESTRICTAS de generación:
 - LÍNEA 2 (Abstracción Conceptual): Generaliza la intención. ¿Qué concepto más amplio, proceso, guía o documentación está buscando el usuario realmente? Formula una pregunta sobre ese marco general.
 - LÍNEA 3 (Contexto y Sinónimos): Formula una pregunta utilizando jerga técnica, vocabulario alternativo o términos de negocio que los manuales o documentos oficiales podrían usar para explicar este tema.
 - FORMATO: Las preguntas deben ser MUY cortas y precisas. Devuelve ÚNICAMENTE las tres preguntas, separadas por un salto de línea (sin números, sin viñetas y sin introducciones)."""
+
 
     expansion_prompt = PromptTemplate(
         input_variables=["question"],
@@ -165,7 +162,7 @@ Reglas ESTRICTAS de generación:
     print('--------------------------------')
 
 
-    return resultado_texto.strip()
+    return resultado_texto
 
 
 
@@ -209,19 +206,19 @@ def obtener_rag_chain(vector_store: Chroma,docs,pregunta_expandida):
 </contexto>
 
 ---
-Eres un Auditor Forense de Datos. Tu trabajo depende de tu precisión. Responde a la pregunta del usuario cumpliendo estas REGLAS:
+Eres un Auditor Forense de Datos. Tu trabajo depende de tu precisión. Basándote EXCLUSIVAMENTE en el contexto de arriba, responde a la pregunta del usuario cumpliendo estas REGLAS INQUEBRANTABLES:
 
-1. DATOS PARCIALES Y CANALES ALTERNATIVOS: Si la pregunta consulta un dato específico (por ejemplo, un correo electrónico) y NO aparece en el contexto, indica explícitamente que no se proporciona. Sin embargo, NO abortes la respuesta: DEBES extraer y reportar todos los demás canales de contacto disponibles (teléfonos, números celulares, extensiones) y cualquier documentación o ruta mencionada relacionada con el tema.
-2. CERO ALUCINACIONES: No inventes nada fuera del contexto. Usa exactamente las cifras, números y nombres de archivos que aparecen en el documento.
-3. EXTRACCIÓN COMPLETA: Si se piden procedimientos o contactos, lista todos los detalles encontrados sin omitir ninguno.
+1. CERO ALUCINACIONES: Si la información exacta para responder la pregunta no se encuentra en el contexto, di explícitamente "La información solicitada no se encuentra".
+2. EXTRACCIÓN COMPLETA: Analiza la pregunta del usuario. Si pide múltiples datos (por ejemplo, tiempos, roles, o ubicaciones), asegúrate de extraer y responder a cada uno de ellos sin omitir partes.
+3. FIDELIDAD: No asumas conocimientos externos. Usa las cifras y nombres exactos del documento.
 
-Estructura obligatoria de respuesta:
+Para obligarte a pensar paso a paso, DEBES imprimir tu respuesta con esta estructura exacta:
 
-**ANALISIS FORENSE:**
-(Análisis de qué datos específicos se piden, cuáles están presentes y cuáles faltan en el contexto).
+**ANALISIS :**
+(Escribe aquí tu análisis: ¿Qué datos específicos está pidiendo el usuario? ¿En qué parte del contexto están?)
 
 **RESPUESTA FINAL:**
-(Respuesta clara en viñetas detallando la falta del dato si aplica, los canales de atención/teléfonos presentes y cualquier documento o ruta de archivo citada).
+(Escribe aquí tu respuesta final en viñetas, de forma clara y directa).
 """
 
     CUSTOM_PROMPT = ChatPromptTemplate.from_messages([
@@ -235,31 +232,19 @@ Estructura obligatoria de respuesta:
     vector_retriever = vector_store.as_retriever(
         search_type="mmr", # <-- ¡Aquí activamos MMR!
         search_kwargs={
-            'k': 15,            # Número de documentos a devolver 
+            'k': 20,            # Número de documentos a devolver 
             'fetch_k': 60,     # Número de documentos a recuperar inicialmente
-            'lambda_mult': 0.5 # Parámetro de diversidad (0=máxima diversidad, 1=máxima relevancia)
+            'lambda_mult': 0.4 # Parámetro de diversidad (0=máxima diversidad, 1=máxima relevancia)
         }
     )
 
 
-    bm25_retriever = BM25Retriever.from_documents(docs)
-    bm25_retriever.k = 15
+    compressor = LLMChainExtractor.from_llm(llm_gemini_instance)
 
-
-    
-    
-    hybrid_retriever = EnsembleRetriever(
-        retrievers=[vector_retriever, bm25_retriever],
-        weights=[0.50, 0.50]
+    compressor_retriever= ContextualCompressionRetriever(
+        base_compressor=compressor,
+        base_retriever=vector_retriever # <-- El híbrido le entrega los documentos al compresor
     )
-
-
-    # compressor = LLMChainExtractor.from_llm(llm_gemini_instance)
-
-    # compressor_retriever= ContextualCompressionRetriever(
-    #     base_compressor=compressor,
-    #     base_retriever=vector_retriever # <-- El híbrido le entrega los documentos al compresor
-    # )
     
 
     # sub_query_prompt=PromptTemplate(
@@ -282,7 +267,7 @@ Estructura obligatoria de respuesta:
     # 1. Ensamblamos las cadenas (esto ya lo tienes bien)
     rag_chain = RetrievalQA.from_chain_type(
         llm=llm_gemini_instance, # Usamos la variable local de la función
-        retriever=hybrid_retriever, # <-- Pasamos el orquestador híbrido
+        retriever=compressor_retriever, # <-- Pasamos el orquestador híbrido
         chain_type_kwargs={"prompt": CUSTOM_PROMPT},
         chain_type="stuff",
         return_source_documents=True
