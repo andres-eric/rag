@@ -124,13 +124,13 @@ def definir_pregunt(question: str)-> str:
 
     try:
         llm_gemini_instance = ChatOllama(
-            model="gemma2:27b",
+            model="qwen2.5-coder:14b",
             base_url="http://localhost:11434",  # URL por defecto de Ollama
-            temperature=0.0,
+            temperature=0.0, 
             repeat_penalty=1.15,
             #format="json"
             #num_gpu=1,
-            #num_thread=12
+            #num_thread=12  
         )
         print("Modelos de Langchain para la pregunta incializado.")
     except Exception as e:
@@ -176,7 +176,7 @@ def obtener_rag_chain(vector_store: Chroma,docs,pregunta_expandida):
 
     try:
         llm_gemini_instance = ChatOllama(
-            model="gemma2:27b",
+            model="qwen2.5-coder:14b",
             base_url="http://localhost:11434",  # URL por defecto de Ollama
             temperature=0.0, 
             repeat_penalty=1.15,
@@ -184,7 +184,7 @@ def obtener_rag_chain(vector_store: Chroma,docs,pregunta_expandida):
             #num_gpu=1,
             #num_thread=12
         )
-        print("Modelo Qwen 2.5 14B (Ollama local) inicializado correctamente.")
+        print("Modelo qwen2.5-coder:14b (Ollama local) inicializado correctamente.")
     except Exception as e:
         print(f"ERROR: Falló la inicialización de ChatOllama. Asegúrate de que Ollama esté corriendo. Mensaje: {e}")
 

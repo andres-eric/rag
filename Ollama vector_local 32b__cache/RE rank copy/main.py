@@ -69,14 +69,15 @@ ruta_guardado = os.path.join(os.path.dirname(full_path), "documento_salida.md")
 guardar_markdown(texto_completo, ruta_guardado)
 print(f"Markdown guardado en: {ruta_guardado}")
 
-pregunta_original="Si ocurre un corte total en el enlace de fibra óptica proporcionado por Tigo, el equipo de seguridad perimetral debe redirigir el tráfico hacia el radio enlace de GTD Colombia. Según los protocolos de recuperación, ¿cuánto tiempo exacto toma esta migración de servicios y qué roles específicos tienen la responsabilidad de ejecutar la recuperación? "
+pregunta_original="¿Cuáles son las dos máquinas virtuales que actúan en el esquema de réplica del servidor TARANIS, pero que tienen una directriz específica que prohíbe realizar sus backups en el transcurso del día normal? "
+
+
 print(f"pregunta original : {pregunta_original}")
 pregunta_expandida = definir_pregunt(pregunta_original)
 
 inicio = time.perf_counter()
 vector_db, chunks = crear_pdf_store_vectore(documentos_cargados)
 fin = time.perf_counter()
-
 
 
 #print(f"Tiempo transcurrido: {fin - inicio}")

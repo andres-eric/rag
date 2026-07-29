@@ -35,6 +35,8 @@ from langchain_experimental.text_splitter import SemanticChunker
 from langchain_community.vectorstores import Annoy
 from langchain_core.output_parsers import StrOutputParser
 
+from langchain_classic.storage import LocalFileStore
+from langchain_classic.embeddings import CacheBackedEmbeddings
 
 # Configuración inicial de logs y warnings
 load_dotenv(find_dotenv())
@@ -60,28 +62,36 @@ load_dotenv(find_dotenv())
     
 
 def crear_pdf_store_vectore(lista_documentos):
-    
+
+
+ 
+    logging.basicConfig(level=logging.ERROR)
+    # Ruta LOCAL en C: — ChromaDB (Rust) no puede escribir en rutas de red (\\belenus\...)
+    persistence_directory = r"C:\Users\afonseca\chroma_db"
+    cache_directory = r"C:\Users\afonseca\embeddings_cache"
+
+
+
     try:
         embeddings_model = OllamaEmbeddings(
             model="bge-m3", 
             base_url="http://localhost:11434"
         )
 
-        print("Modelos de Langchain (Embeddings) inicializados en rag_system.")
+
+        store=LocalFileStore(cache_directory)
+        
+        embedding_cache=CacheBackedEmbeddings.from_bytes_store(
+            embeddings_model, 
+            store, 
+            namespace=embeddings_model.model
+        )
+
+        print(f"Cache embeddings inicializado en: {cache_directory}")
+
     except Exception as e:
-        print(f"ERROR: Falló la inicialización de CohereEmbeddings. Mensaje: {e}")
-        print("Asegúrate de que los nombres de los modelos sean correctos y que la API Key tenga acceso a ellos.")
+        print(f"ERROR: Falló la inicialización de CacheBackedEmbeddings. Mensaje: {e}")
     
-
-    
-    import logging
-    logging.basicConfig(level=logging.ERROR)
-    # Ruta LOCAL en C: — ChromaDB (Rust) no puede escribir en rutas de red (\\belenus\...)
-    persistence_directory = r"C:\Users\afonseca\chroma_db"
-
-
-
-    #SemanticChunker divide segun la idea de la lectura
 
     text_splitter = SemanticChunker(
         embeddings=embeddings_model, # Le pasamos tu modelo de Ollama
@@ -124,13 +134,13 @@ def definir_pregunt(question: str)-> str:
 
     try:
         llm_gemini_instance = ChatOllama(
-            model="gemma2:27b",
+            model="qwen2.5:14b",
             base_url="http://localhost:11434",  # URL por defecto de Ollama
-            temperature=0.0,
+            temperature=0.0, 
             repeat_penalty=1.15,
             #format="json"
             #num_gpu=1,
-            #num_thread=12
+            #num_thread=12  
         )
         print("Modelos de Langchain para la pregunta incializado.")
     except Exception as e:
@@ -141,6 +151,8 @@ def definir_pregunt(question: str)-> str:
 
 Tu objetivo es interpretar la intención subyacente del usuario y generar tres versiones alternativas de búsqueda para una base de datos vectorial. Debes capturar todos los contextos posibles del tema, desde lo más simple hasta lo más general.
 
+Importante: Incluye en las busquedas palabras claves como: procedimientos y NOMBRES DE ARCHIVOS O DOCUMENTOS ANEXOS relacionados.
+ 
 Reglas ESTRICTAS de generación:
 - LÍNEA 1 (Directa y Simple): Reescribe la pregunta original de forma autocontenida, clara y directa, resolviendo cualquier ambigüedad.
 - LÍNEA 2 (Abstracción Conceptual): Generaliza la intención. ¿Qué concepto más amplio, proceso, guía o documentación está buscando el usuario realmente? Formula una pregunta sobre ese marco general.
@@ -184,7 +196,7 @@ def obtener_rag_chain(vector_store: Chroma,docs,pregunta_expandida):
             #num_gpu=1,
             #num_thread=12
         )
-        print("Modelo Qwen 2.5 14B (Ollama local) inicializado correctamente.")
+        print("Modelo gemma2:27b (Ollama local) inicializado correctamente.")
     except Exception as e:
         print(f"ERROR: Falló la inicialización de ChatOllama. Asegúrate de que Ollama esté corriendo. Mensaje: {e}")
 
@@ -279,22 +291,22 @@ Para obligarte a pensar paso a paso, DEBES imprimir tu respuesta con esta estruc
     result = rag_chain.invoke({"query": pregunta_expandida})
 
     # 3. Iteramos sobre los documentos recuperados (en LCEL la llave es 'context')
-    print("\n" + "="*50)
-    print("📄 FRAGMENTOS LEÍDOS")
-    print("="*50)
-    for i, doc in enumerate(result.get('source_documents', [])):
-        print(f"\n--- FUENTE {i+1} ---")
-        print(f"Contenido:\n{doc.page_content}")
-        print("-" * 20)
+    # print("\n" + "="*50)
+    # print("📄 FRAGMENTOS LEÍDOS")
+    # print("="*50)
+    # for i, doc in enumerate(result.get('source_documents', [])):
+    #     print(f"\n--- FUENTE {i+1} ---")
+    #     print(f"Contenido:\n{doc.page_content}")
+    #     print("-" * 20)
 
     # 4. Imprimimos la respuesta final (en LCEL la llave es 'answer')
     #print(f"pregunca: {consulta}")
     print("\n" + "="*50)
-    print("🤖 RESPUESTA FINAL DEL AGENTE FORENSE")
+    print("🤖 RESPUESTA FINAL")
     print("="*50)
     print(result.get('result', ''))
-    # print(f"pregunca: {consulta}")
-    # print('--------------------------------')
-    # print(result['answer'])
+    #print(f"pregunca: {consulta}")
+    print('--------------------------------')
+    #print(result['answer'])
 
     return result['result']

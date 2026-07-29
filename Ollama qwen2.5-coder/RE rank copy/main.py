@@ -69,7 +69,7 @@ ruta_guardado = os.path.join(os.path.dirname(full_path), "documento_salida.md")
 guardar_markdown(texto_completo, ruta_guardado)
 print(f"Markdown guardado en: {ruta_guardado}")
 
-pregunta_original="Si ocurre un corte total en el enlace de fibra óptica proporcionado por Tigo, el equipo de seguridad perimetral debe redirigir el tráfico hacia el radio enlace de GTD Colombia. Según los protocolos de recuperación, ¿cuánto tiempo exacto toma esta migración de servicios y qué roles específicos tienen la responsabilidad de ejecutar la recuperación? "
+pregunta_original="¿Durante un simulacro oficial de fallas en los servidores, los auditores evalúan la eficiencia del esquema de réplica copiando un archivo de prueba. ¿Cuál es la duración total estipulada para estas pruebas de réplica y cuánto tiempo exacto se debe esperar antes de verificar si el archivo se replicó correctamente? "
 print(f"pregunta original : {pregunta_original}")
 pregunta_expandida = definir_pregunt(pregunta_original)
 
