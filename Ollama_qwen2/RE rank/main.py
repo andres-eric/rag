@@ -1,41 +1,3 @@
-# =============================================================================
-# INSTRUCCIONES DE EJECUCIÓN — LEER ANTES DE CORRER
-# =============================================================================
-#
-# 1. VERIFICAR QUE OLLAMA ESTÉ CORRIENDO (servidor local de IA):
-#    Ollama normalmente arranca automático con Windows. Para verificarlo:
-#
-#    PowerShell:
-#       & "C:\Users\afonseca\AppData\Local\Programs\Ollama\ollama.exe" ps
-#
-#    Si no hay modelos activos, Ollama igual está corriendo en background.
-#    Si aparece error de "puerto en uso" al intentar iniciarlo = ya está activo ✅
-#
-#    Para iniciarlo manualmente (solo si no está corriendo):
-#       & "C:\Users\afonseca\AppData\Local\Programs\Ollama\ollama.exe" serve
-#
-# 2. MODELO USADO: deepseek-r1:1.5b (corre en GPU NVIDIA RTX PRO 2000 Blackwell)
-#    Para verificar que el modelo está instalado:
-#       & "C:\Users\afonseca\AppData\Local\Programs\Ollama\ollama.exe" list
-#
-#    Para instalarlo si no está:
-#       & "C:\Users\afonseca\AppData\Local\Programs\Ollama\ollama.exe" pull deepseek-r1:1.5b
-#
-# 3. VERIFICAR USO DE GPU (CUDA):
-#    PowerShell:
-#       nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total --format=csv,noheader
-#    Si memory.used sube cuando corre el modelo = está usando GPU ✅
-#
-# 4. EJECUTAR ESTE SCRIPT:
-#    PowerShell:
-#       & "\\belenus\IT\ComandosSQL\sql scripts-Esteban\LL R\chat bot-12\BM25\.venv\Scripts\python.exe" `
-#         "\\belenus\IT\ComandosSQL\sql scripts-Esteban\LL R\chat bot-12\Ollama\RE rank\main.py"
-#
-# 5. NOTAS IMPORTANTES:
-#    - ChromaDB se guarda LOCAL en: C:\Users\afonseca\chroma_db  (NO en la red)
-#    - El PDF fuente está en: \\belenus\...\chat bot-12\ti.pdf
-#    - Los archivos están en red (\\belenus) pero la IA corre en tu PC local
-# =============================================================================
 
 import os
 import logging
@@ -47,8 +9,7 @@ import time
 #logging.getLogger("streamlit").setLevel(logging.ERROR)
 load_dotenv(find_dotenv())
 
-# Obtener la ruta base del proyecto (raíz de chat bot-12, 3 niveles arriba de main.py)
-# main.py está en: chat bot-12/Ollama/RE rank/main.py
+
 print("tiempo de ejecución inicio")
 tiempo_inicio_programa = time.perf_counter()
 
